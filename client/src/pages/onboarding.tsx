@@ -41,7 +41,7 @@ export default function Onboarding() {
     );
   }
 
-  if (!user) {
+  if (user) {
     return (
       <div className="min-h-screen bg-hero-pattern flex items-center justify-center">
         <Card className="w-full max-w-md p-8">
