@@ -25,12 +25,13 @@ const authenticateToken = async (req: any, res: any, next: any) => {
     const decoded = jwt.verify(token, JWT_SECRET) as any;
     const user = await storage.getUser(decoded.userId);
     if (!user) {
-      return res.status(403).json({ message: 'Invalid token' });
+      return res.status(401).json({ message: 'User not found' });
     }
     req.user = user;
     next();
   } catch (error) {
-    return res.status(403).json({ message: 'Invalid or expired token' });
+    console.error('Token verification failed:', error);
+    return res.status(401).json({ message: 'Invalid or expired token' });
   }
 };
 
@@ -38,8 +39,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { username, email, password, role = "admin" } = insertUserSchema.parse(req.body);
-      
+      const { username, email, password, role = "admin", institutionId } = insertUserSchema.parse(req.body);
+
       // Check if user already exists
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
@@ -48,13 +49,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
-      
+
       // Create user
       const user = await storage.createUser({
         username,
         email,
         password: hashedPassword,
         role,
+        institutionId,
       });
 
       // Generate token
@@ -69,7 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email, password } = req.body;
-      
+
       // Find user
       const user = await storage.getUserByEmail(email);
       if (!user) {
@@ -101,27 +103,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check if any institutions exist (for onboarding)
+  app.get("/api/institutions/check", async (req, res) => {
+    try {
+      console.log("Checking for existing institutions...");
+      const institutions = await storage.getAllInstitutions();
+      res.json({ hasInstitutions: institutions.length > 0 });
+    } catch (error: any) {
+      console.error("Error checking institutions:", error);
+      if (error.message?.includes("relation") && error.message?.includes("does not exist")) {
+        // Database tables don't exist yet - this is initial setup
+        res.json({ hasInstitutions: false });
+      } else {
+        res.status(500).json({ 
+          message: error.message || "Database connection error",
+          detail: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+      }
+    }
+  });
+
   // Institution routes
-  app.post("/api/institutions", authenticateToken, async (req: any, res) => {
+  app.post("/api/institutions", async (req: any, res) => {
     try {
       const institutionData = insertInstitutionSchema.parse(req.body);
       const institution = await storage.createInstitution(institutionData);
-      
-      // Update user's institutionId
-      await storage.updateUser(req.user.id, { institutionId: institution.id });
-      
-      // Log activity
-      await storage.logActivity({
-        institutionId: institution.id,
-        userId: req.user.id,
-        action: "institution_created",
-        description: `Institution "${institution.name}" created`,
-        metadata: { institutionType: institution.type, educationSystem: institution.educationSystem }
-      });
+
+      // Check if this is initial setup (no authentication) or authenticated user
+      const authHeader = req.headers['authorization'];
+      const token = authHeader && authHeader.split(' ')[1];
+
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, JWT_SECRET) as any;
+          const user = await storage.getUser(decoded.userId);
+          if (user) {
+            // Update user's institutionId
+            await storage.updateUser(user.id, { institutionId: institution.id });
+
+            // Log activity for authenticated user
+            await storage.logActivity({
+              institutionId: institution.id,
+              userId: user.id,
+              action: "institution_created",
+              description: `Institution "${institution.name}" created`,
+              metadata: { institutionType: institution.type, educationSystem: institution.educationSystem }
+            });
+          }
+        } catch (authError) {
+          // Invalid token during initial setup is OK
+          console.log("Initial setup - no valid authentication required");
+        }
+      }
 
       res.json(institution);
     } catch (error: any) {
-      res.status(400).json({ message: error.message });
+      console.error("Institution creation error:", error);
+      if (error.errors) {
+        // Zod validation error
+        res.status(400).json({ 
+          message: "Validation failed", 
+          errors: error.errors.map((e: any) => ({
+            field: e.path.join('.'),
+            message: e.message
+          }))
+        });
+      } else {
+        res.status(400).json({ message: error.message || "Failed to create institution" });
+      }
     }
   });
 
@@ -152,19 +201,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/institutions/:id/configure", authenticateToken, async (req: any, res) => {
+  app.post("/api/institutions/:id/configure", async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       await storage.markInstitutionConfigured(id);
-      
-      // Log activity
-      await storage.logActivity({
-        institutionId: id,
-        userId: req.user.id,
-        action: "institution_configured",
-        description: "Institution setup completed",
-        metadata: {}
-      });
+
+      // Check if this is initial setup (no authentication) or authenticated user
+      const authHeader = req.headers['authorization'];
+      const token = authHeader && authHeader.split(' ')[1];
+
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, JWT_SECRET) as any;
+          const user = await storage.getUser(decoded.userId);
+          if (user) {
+            // Log activity for authenticated user
+            await storage.logActivity({
+              institutionId: id,
+              userId: user.id,
+              action: "institution_configured",
+              description: "Institution setup completed",
+              metadata: {}
+            });
+          }
+        } catch (authError) {
+          // Invalid token during initial setup is OK
+          console.log("Initial setup - no valid authentication required");
+        }
+      }
 
       res.json({ message: "Institution configured successfully" });
     } catch (error: any) {
@@ -187,7 +251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const facultyData = insertFacultySchema.parse(req.body);
       const faculty = await storage.createFaculty(facultyData);
-      
+
       // Log activity
       await storage.logActivity({
         institutionId: faculty.institutionId,
@@ -218,7 +282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const departmentData = insertDepartmentSchema.parse(req.body);
       const department = await storage.createDepartment(departmentData);
-      
+
       // Log activity
       await storage.logActivity({
         institutionId: department.institutionId,
@@ -249,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const staffData = insertAcademicStaffSchema.parse(req.body);
       const staff = await storage.createAcademicStaff(staffData);
-      
+
       // Log activity
       await storage.logActivity({
         institutionId: staff.institutionId,
@@ -280,7 +344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const studentData = insertStudentSchema.parse(req.body);
       const student = await storage.createStudent(studentData);
-      
+
       // Log activity
       await storage.logActivity({
         institutionId: student.institutionId,
@@ -311,7 +375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const courseData = insertCourseSchema.parse(req.body);
       const course = await storage.createCourse(courseData);
-      
+
       // Log activity
       await storage.logActivity({
         institutionId: course.institutionId,
@@ -342,7 +406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const classroomData = insertClassroomSchema.parse(req.body);
       const classroom = await storage.createClassroom(classroomData);
-      
+
       // Log activity
       await storage.logActivity({
         institutionId: classroom.institutionId,
@@ -394,7 +458,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const slotData = insertTimetableSlotSchema.parse(req.body);
       const slot = await storage.createTimetableSlot(slotData);
-      
+
       // Log activity
       await storage.logActivity({
         institutionId: slot.institutionId,
@@ -470,7 +534,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const record = await storage.updateAttendanceRecord(id, req.body);
-      
+
       if (!record) {
         return res.status(404).json({ message: "Record not found" });
       }
@@ -506,7 +570,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const integration = await storage.updateApiIntegration(id, req.body);
-      
+
       if (!integration) {
         return res.status(404).json({ message: "Integration not found" });
       }
@@ -554,7 +618,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updatedUser = await storage.updateUserRole(id, role, permissions);
-      
+
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -562,6 +626,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedUser);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Health check endpoint
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "OK", timestamp: new Date().toISOString() });
+  });
+
+  // Dashboard stats endpoint
+  app.get("/api/dashboard/stats", authenticateToken, async (req, res) => {
+    try {
+      const stats = await storage.getDashboardStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Dashboard stats error:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard stats" });
     }
   });
 

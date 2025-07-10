@@ -1,36 +1,39 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarPlus, UserPlus, BookOpen, BarChart3, ChevronRight } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function QuickActions() {
+  const [, setLocation] = useLocation();
+
   const actions = [
     {
       title: "Create New Timetable",
       icon: CalendarPlus,
       gradient: "bg-primary-50 border-primary-200 hover:bg-primary-100",
       iconColor: "text-primary-600",
-      onClick: () => console.log("Create timetable"),
+      onClick: () => setLocation("/timetable"),
     },
     {
       title: "Add New Student",
       icon: UserPlus,
       gradient: "bg-green-50 border-green-200 hover:bg-green-100",
       iconColor: "text-green-600",
-      onClick: () => console.log("Add student"),
+      onClick: () => setLocation("/students"),
     },
     {
       title: "Manage Courses",
       icon: BookOpen,
       gradient: "bg-purple-50 border-purple-200 hover:bg-purple-100",
       iconColor: "text-purple-600",
-      onClick: () => console.log("Manage courses"),
+      onClick: () => setLocation("/courses"),
     },
     {
       title: "Generate Reports",
       icon: BarChart3,
       gradient: "bg-orange-50 border-orange-200 hover:bg-orange-100",
       iconColor: "text-orange-600",
-      onClick: () => console.log("Generate reports"),
+      onClick: () => setLocation("/reports"),
     },
   ];
 

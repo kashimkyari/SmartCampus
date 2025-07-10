@@ -8,6 +8,7 @@ import { GraduationCap } from "lucide-react";
 import InstitutionTypeStep from "@/components/onboarding/institution-type-step";
 import EducationSystemStep from "@/components/onboarding/education-system-step";
 import InstitutionDetailsStep from "@/components/onboarding/institution-details-step";
+import AdminUserStep from "@/components/onboarding/admin-user-step";
 import ConfigurationStep from "@/components/onboarding/configuration-step";
 
 export default function Onboarding() {
@@ -22,14 +23,38 @@ export default function Onboarding() {
   });
 
   useEffect(() => {
-    // Redirect to dashboard if institution is already configured
-    if (institution?.isConfigured) {
-      setLocation("/dashboard");
-    }
-    // Redirect to login if not authenticated
-    if (!isLoading && !user) {
-      // You can add a login page and redirect there
-      console.log("User not authenticated");
+    // Check if any institution already exists (onboarding completed)
+    const checkExistingInstitutions = async () => {
+      try {
+        const response = await fetch("/api/institutions/check");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.hasInstitutions) {
+            // Institution exists, redirect to dashboard or login
+            if (user && institution?.isConfigured) {
+              setLocation("/dashboard");
+            } else if (!user) {
+              // Show login form instead of onboarding
+              setLocation("/login");
+            }
+          }
+        }
+      } catch (error) {
+        console.log("Initial setup mode - no institutions found");
+      }
+    };
+
+    if (!isLoading) {
+      // Redirect to dashboard if user is logged in and institution is configured
+      if (user && institution?.isConfigured) {
+        setLocation("/dashboard");
+        return;
+      }
+      
+      // Check for existing institutions only if no user is logged in
+      if (!user) {
+        checkExistingInstitutions();
+      }
     }
   }, [user, institution, isLoading, setLocation]);
 
@@ -41,7 +66,34 @@ export default function Onboarding() {
     );
   }
 
-  if (user) {
+  // Show initial setup screen if no user and no institution (first time setup) and haven't started onboarding
+  if (!user && !institution && !isLoading && currentStep === 1) {
+    return (
+      <div className="min-h-screen bg-hero-pattern flex items-center justify-center">
+        <Card className="w-full max-w-md p-8">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-6">
+              <GraduationCap className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-secondary-900 mb-4">Welcome to SmartCampus</h1>
+            <p className="text-secondary-600 mb-6">Get started by configuring your educational institution management system.</p>
+            <Button 
+              className="w-full" 
+              onClick={() => {
+                // Proceed to onboarding for initial setup
+                setCurrentStep(2); // Move to step 2 to show the actual onboarding
+              }}
+            >
+              Get Started
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // If user exists but no institution, continue with authenticated onboarding
+  if (!user && institution) {
     return (
       <div className="min-h-screen bg-hero-pattern flex items-center justify-center">
         <Card className="w-full max-w-md p-8">
@@ -51,7 +103,9 @@ export default function Onboarding() {
             </div>
             <h1 className="text-2xl font-bold text-secondary-900 mb-4">Welcome to SmartCampus</h1>
             <p className="text-secondary-600 mb-6">Please log in to continue with the setup.</p>
-            <Button className="w-full">Login</Button>
+            <Button className="w-full">
+              Login
+            </Button>
           </div>
         </Card>
       </div>
@@ -62,7 +116,8 @@ export default function Onboarding() {
     { number: 1, title: "Institution Type", component: InstitutionTypeStep },
     { number: 2, title: "Educational System", component: EducationSystemStep },
     { number: 3, title: "Institution Details", component: InstitutionDetailsStep },
-    { number: 4, title: "Configuration", component: ConfigurationStep },
+    { number: 4, title: "Admin User", component: AdminUserStep },
+    { number: 5, title: "Configuration", component: ConfigurationStep },
   ];
 
   const updateOnboardingData = (stepData: any) => {
@@ -70,7 +125,7 @@ export default function Onboarding() {
   };
 
   const nextStep = () => {
-    if (currentStep < steps.length) {
+    if (currentStep < steps.length + 1) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -81,9 +136,13 @@ export default function Onboarding() {
     }
   };
 
-  const CurrentStepComponent = steps[currentStep - 1].component;
+  // Adjust step index for display (currentStep starts at 2 for actual onboarding)
+  const stepIndex = currentStep - 2;
+  const CurrentStepComponent = steps[stepIndex]?.component;
 
-  return (
+  // Show onboarding steps if currentStep > 1 (after Get Started is clicked)
+  if (currentStep > 1) {
+    return (
     <div className="min-h-screen bg-hero-pattern p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
@@ -106,7 +165,7 @@ export default function Onboarding() {
                 <div className="flex items-center">
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      currentStep >= step.number
+                      currentStep >= step.number + 1
                         ? "bg-white text-primary-600"
                         : "bg-primary-400 text-white"
                     }`}
@@ -115,7 +174,7 @@ export default function Onboarding() {
                   </div>
                   <span
                     className={`ml-2 text-sm font-medium ${
-                      currentStep >= step.number ? "text-white" : "text-primary-200"
+                      currentStep >= step.number + 1 ? "text-white" : "text-primary-200"
                     }`}
                   >
                     {step.title}
@@ -136,11 +195,19 @@ export default function Onboarding() {
             updateData={updateOnboardingData}
             onNext={nextStep}
             onPrev={prevStep}
-            isFirstStep={currentStep === 1}
-            isLastStep={currentStep === steps.length}
+            isFirstStep={currentStep === 2}
+            isLastStep={currentStep === steps.length + 1}
           />
         </Card>
       </div>
+    </div>
+    );
+  }
+
+  // Fallback - should not reach here
+  return (
+    <div className="min-h-screen bg-hero-pattern flex items-center justify-center">
+      <div className="text-white text-lg">Loading...</div>
     </div>
   );
 }

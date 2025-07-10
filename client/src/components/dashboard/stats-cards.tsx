@@ -1,68 +1,93 @@
-import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/use-auth";
-import { Card } from "@/components/ui/card";
-import { GraduationCap, BookOpen, Users, DoorOpen } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Users, GraduationCap, BookOpen, Calendar } from "lucide-react";
+
+interface DashboardStats {
+  totalStudents: number;
+  totalStaff: number;
+  totalCourses: number;
+  classesToday: number;
+  studentChange: number;
+  staffChange: number;
+  courseChange: number;
+  classChange: number;
+}
 
 export default function StatsCards() {
-  const { institution } = useAuth();
-
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ["/api/institutions", institution?.id, "stats"],
-    enabled: !!institution?.id,
+  const [stats, setStats] = useState<DashboardStats>({
+    totalStudents: 0,
+    totalStaff: 0,
+    totalCourses: 0,
+    classesToday: 0,
+    studentChange: 0,
+    staffChange: 0,
+    courseChange: 0,
+    classChange: 0,
   });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch("/api/dashboard/stats", {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch dashboard stats:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const statsCards = [
     {
       title: "Total Students",
-      value: stats?.totalStudents || 0,
-      change: "+12%",
-      changeType: "positive",
+      value: isLoading ? "..." : stats.totalStudents.toLocaleString(),
+      change: isLoading ? "..." : `${stats.studentChange >= 0 ? '+' : ''}${stats.studentChange}%`,
+      changeType: stats.studentChange >= 0 ? "positive" as const : "negative" as const,
       icon: GraduationCap,
       gradient: "from-blue-500 to-blue-600",
     },
     {
-      title: "Active Courses",
-      value: stats?.activeCourses || 0,
-      change: "+8%",
-      changeType: "positive",
-      icon: BookOpen,
+      title: "Active Staff",
+      value: isLoading ? "..." : stats.totalStaff.toLocaleString(),
+      change: isLoading ? "..." : `${stats.staffChange >= 0 ? '+' : ''}${stats.staffChange}%`,
+      changeType: stats.staffChange >= 0 ? "positive" as const : "negative" as const,
+      icon: Users,
       gradient: "from-green-500 to-green-600",
     },
     {
-      title: "Faculty Members",
-      value: stats?.facultyMembers || 0,
-      change: "+3%",
-      changeType: "positive",
-      icon: Users,
+      title: "Total Courses",
+      value: isLoading ? "..." : stats.totalCourses.toLocaleString(),
+      change: isLoading ? "..." : `${stats.courseChange >= 0 ? '+' : ''}${stats.courseChange}%`,
+      changeType: stats.courseChange >= 0 ? "positive" as const : "negative" as const,
+      icon: BookOpen,
       gradient: "from-purple-500 to-purple-600",
     },
     {
-      title: "Classroom Usage",
-      value: `${stats?.classroomUsage || 0}%`,
-      change: "-2%",
-      changeType: "negative",
-      icon: DoorOpen,
+      title: "Classes Today",
+      value: isLoading ? "..." : stats.classesToday.toLocaleString(),
+      change: isLoading ? "..." : `${stats.classChange >= 0 ? '+' : ''}${stats.classChange}%`,
+      changeType: stats.classChange >= 0 ? "positive" as const : "negative" as const,
+      icon: Calendar,
       gradient: "from-orange-500 to-orange-600",
     },
   ];
-
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="p-5 animate-pulse">
-            <div className="h-16 bg-gray-200 rounded"></div>
-          </Card>
-        ))}
-      </div>
-    );
-  }
 
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
       {statsCards.map((stat, index) => {
         const Icon = stat.icon;
-        
+
         return (
           <Card key={index} className="bg-white overflow-hidden shadow-sm border border-gray-200">
             <div className="p-5">

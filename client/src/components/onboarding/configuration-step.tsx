@@ -34,12 +34,11 @@ export default function ConfigurationStep({
 
   const createInstitutionMutation = useMutation({
     mutationFn: async () => {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/institutions", {
+      // Step 1: Create the institution
+      const institutionResponse = await fetch("/api/institutions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: data.institutionDetails.name,
@@ -47,6 +46,7 @@ export default function ConfigurationStep({
           educationSystem: data.educationSystem,
           location: data.institutionDetails.location,
           size: data.institutionDetails.size,
+          academicCalendar: null,
           structure: {
             modules: selectedModules,
             details: data.institutionDetails,
@@ -54,27 +54,66 @@ export default function ConfigurationStep({
         }),
       });
 
-      if (!response.ok) {
+      if (!institutionResponse.ok) {
         throw new Error("Failed to create institution");
       }
 
-      return response.json();
+      const institution = await institutionResponse.json();
+
+      // Step 2: Create admin user
+      const adminUserResponse = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: data.adminUser.username,
+          email: data.adminUser.email,
+          password: data.adminUser.password,
+          role: "admin",
+          institutionId: institution.id,
+        }),
+      });
+
+      if (!adminUserResponse.ok) {
+        throw new Error("Failed to create admin user");
+      }
+
+      const adminUserData = await adminUserResponse.json();
+
+      // Step 3: Auto-login the admin user
+      localStorage.setItem("token", adminUserData.token);
+
+      // Set axios default authorization header if using axios
+      if (typeof window !== 'undefined') {
+        const token = adminUserData.token;
+        // Update any global auth state here if needed
+      }
+
+      return { institution, adminUser: adminUserData };
     },
-    onSuccess: async (institution) => {
-      // Mark institution as configured
+    onSuccess: async (result) => {
+      const { institution, adminUser } = result;
+      
+      // Mark institution as configured using the admin user's token
       const token = localStorage.getItem("token");
       await fetch(`/api/institutions/${institution.id}/configure`, {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
 
+      // Update auth context with the new user and institution
       setInstitution({ ...institution, isConfigured: true });
+      
       toast({
         title: "Institution Setup Complete!",
-        description: "Your institution has been successfully configured.",
+        description: `Welcome ${adminUser.user.username}! Your institution has been successfully configured.`,
       });
+      
+      // Redirect to dashboard
       setLocation("/dashboard");
     },
     onError: (error: any) => {

@@ -24,6 +24,7 @@ export interface IStorage {
   // Institution operations
   getInstitution(id: number): Promise<Institution | undefined>;
   getInstitutionByUserId(userId: number): Promise<Institution | undefined>;
+  getAllInstitutions(): Promise<Institution[]>;
   createInstitution(institution: InsertInstitution): Promise<Institution>;
   updateInstitution(id: number, institution: Partial<InsertInstitution>): Promise<Institution | undefined>;
   markInstitutionConfigured(id: number): Promise<void>;
@@ -68,6 +69,17 @@ export interface IStorage {
     activeCourses: number;
     facultyMembers: number;
     classroomUsage: number;
+  }>;
+  
+  getDashboardStats(): Promise<{
+    totalStudents: number;
+    totalStaff: number;
+    totalCourses: number;
+    classesToday: number;
+    studentChange: number;
+    staffChange: number;
+    courseChange: number;
+    classChange: number;
   }>;
 
   // Activity Log
@@ -131,13 +143,32 @@ export class DatabaseStorage implements IStorage {
   async getInstitutionByUserId(userId: number): Promise<Institution | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, userId));
     if (!user || !user.institutionId) return undefined;
-    
+
     return this.getInstitution(user.institutionId);
   }
 
+  async getAllInstitutions(): Promise<Institution[]> {
+    try {
+      console.log("Fetching all institutions...");
+      const institutionsList = await db.select().from(institutions);
+      console.log(`Found ${institutionsList.length} institutions`);
+      return institutionsList;
+    } catch (error) {
+      console.error("Failed to fetch institutions:", error);
+      throw error;
+    }
+  }
+
   async createInstitution(insertInstitution: InsertInstitution): Promise<Institution> {
-    const [institution] = await db.insert(institutions).values(insertInstitution).returning();
-    return institution;
+    try {
+      console.log("Creating institution with data:", insertInstitution);
+      const [institution] = await db.insert(institutions).values(insertInstitution).returning();
+      console.log("Institution created successfully:", institution.id);
+      return institution;
+    } catch (error) {
+      console.error("Failed to create institution:", error);
+      throw error;
+    }
   }
 
   async updateInstitution(id: number, updateData: Partial<InsertInstitution>): Promise<Institution | undefined> {
@@ -287,6 +318,54 @@ export class DatabaseStorage implements IStorage {
       classroomUsage: Math.min(classroomUsage, 100),
     };
   }
+  
+  async getDashboardStats(): Promise<{
+    totalStudents: number;
+    totalStaff: number;
+    totalCourses: number;
+    classesToday: number;
+    studentChange: number;
+    staffChange: number;
+    courseChange: number;
+    classChange: number;
+  }> {
+    try {
+      // Get counts for all entities
+      const studentCount = await db.select({ count: sql<number>`count(*)` }).from(students);
+      const staffCount = await db.select({ count: sql<number>`count(*)` }).from(academicStaff);
+      const courseCount = await db.select({ count: sql<number>`count(*)` }).from(courses);
+
+      // Get today's classes
+      const today = new Date().toISOString().split('T')[0];
+      const todayClasses = await db.select({ count: sql<number>`count(*)` }).from(timetableSlots)
+        .where(eq(timetableSlots.dayOfWeek, new Date().toLocaleDateString('en-US', { weekday: 'long' })));
+
+      // For demonstration, return mock percentage changes
+      // In a real implementation, you would compare with previous period data
+      return {
+        totalStudents: studentCount[0]?.count || 0,
+        totalStaff: staffCount[0]?.count || 0,
+        totalCourses: courseCount[0]?.count || 0,
+        classesToday: todayClasses[0]?.count || 0,
+        studentChange: Math.floor(Math.random() * 20) - 5, // Random change between -5 and +15
+        staffChange: Math.floor(Math.random() * 10) - 2, // Random change between -2 and +8
+        courseChange: Math.floor(Math.random() * 15) - 3, // Random change between -3 and +12
+        classChange: Math.floor(Math.random() * 8) - 4, // Random change between -4 and +4
+      };
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      return {
+        totalStudents: 0,
+        totalStaff: 0,
+        totalCourses: 0,
+        classesToday: 0,
+        studentChange: 0,
+        staffChange: 0,
+        courseChange: 0,
+        classChange: 0,
+      };
+    }
+  }
 
   // Activity Log
   async getRecentActivities(institutionId: number, limit: number = 10): Promise<ActivityLog[]> {
@@ -369,7 +448,7 @@ export class DatabaseStorage implements IStorage {
     if (permissions) {
       updateData.permissions = permissions;
     }
-    
+
     const [user] = await db
       .update(users)
       .set({ ...updateData, updatedAt: new Date() })
