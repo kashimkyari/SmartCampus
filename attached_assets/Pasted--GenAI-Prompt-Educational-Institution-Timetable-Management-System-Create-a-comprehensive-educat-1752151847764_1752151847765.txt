@@ -1,0 +1,417 @@
+# GenAI Prompt: Educational Institution Timetable & Management System
+
+Create a comprehensive educational institution management system with intelligent timetabling and full academic administration capabilities. The system should support multiple educational structures and include an integrated school management system.
+
+## Initial Setup & Onboarding
+
+### 1. Institution Setup Wizard
+- **Welcome Screen**: Introduction and system overview
+- **Institution Type Selection**: 
+  - High School (Secondary Education)
+  - University/College (Higher Education)
+  - Technical/Vocational School
+  - International School
+- **Educational System Choice**:
+  - British System (GCSE, A-Levels, UK University structure)
+  - American System (High School, College/University structure)
+  - International Baccalaureate (IB)
+  - Custom/Other systems
+- **Institution Details**: Name, location, size, academic calendar
+- **Administrative Structure Setup**: Based on selected system type
+
+### 2. System Configuration Based on Institution Type
+
+#### For Universities/Higher Education:
+- **Faculty Structure**: Create faculties (e.g., Engineering, Arts, Sciences)
+- **Department Hierarchy**: Departments within faculties
+- **School/College Setup**: If applicable (e.g., School of Medicine)
+- **Academic Programs**: Undergraduate, Postgraduate, Doctoral
+- **Semester/Term System**: Configure academic periods
+- **Credit System**: ECTS, US Credits, or custom systems
+
+#### For High Schools:
+- **Grade/Year Structure**: Configure based on system
+  - British: Years 7-13, Key Stages
+  - American: Grades 9-12, GPA system
+- **Subject Groupings**: Core, Optional, Advanced placement
+- **Assessment Structure**: Term-based, semester-based, or modular
+- **Certification Preparation**: GCSE, A-Levels, SAT, AP courses
+
+### 3. User Role Configuration
+- **Administrative Roles**: Principal, Vice-Principal, Registrar, Academic Officer
+- **Academic Roles**: Dean, Head of Department, Course Coordinator, Lecturer/Teacher
+- **Support Staff**: IT Admin, Librarian, Counselor
+- **Student Roles**: Undergraduate, Postgraduate, Research Student (Universities)
+- **Parent/Guardian Access**: For high schools and younger students
+
+## Core Requirements
+
+### 1. Adaptive Data Models (Institution-Specific)
+
+#### University/Higher Education Models:
+- **Faculty Model**: Faculty ID, name, dean, departments, budget allocation
+- **Department Model**: Department ID, name, faculty, head of department, staff count
+- **School/College Model**: For institutions with school subdivisions
+- **Program Model**: Degree programs, duration, credit requirements, curriculum
+- **Module/Course Model**: Course codes, credits, prerequisites, learning outcomes
+- **Academic Staff Model**: Lecturer ID, department, rank, specializations, research areas
+- **Student Model**: Student ID, program, year of study, academic standing, transcript
+
+#### High School Models:
+- **Year/Grade Model**: Grade level, subjects, assessment criteria
+- **Subject Model**: Core/optional subjects, difficulty levels, exam boards
+- **Class/Form Model**: Class groups, form tutors, student capacity
+- **Teacher Model**: Teacher ID, subjects taught, qualifications, teaching load
+- **Student Model**: Student ID, year group, subjects taken, assessment records
+
+#### Universal Models:
+- **Classroom Model**: Room number, capacity, equipment, building location
+- **Time Slot Model**: Day, period, duration, academic calendar integration
+- **Academic Calendar**: Terms, semesters, holidays, exam periods
+- **Assessment Model**: Grades, marks, coursework, examinations
+
+### 2. Integrated School Management System
+
+#### Student Information System
+- **Student Profiles**: Personal details, academic history, contact information
+- **Enrollment Management**: Course registration, prerequisite checking, capacity limits
+- **Academic Records**: Transcripts, grades, attendance, disciplinary records
+- **Parent/Guardian Portal**: Access to student progress (high schools)
+- **Student Dashboard**: Personal timetable, grades, assignments, announcements
+
+#### Assessment & Grading System
+- **Flexible Grading**: Support multiple grading systems (GPA, UK grades, percentages)
+- **Coursework Tracking**: Assignments, submissions, feedback, deadlines
+- **Examination Management**: Exam scheduling, invigilation, results processing
+- **Progress Monitoring**: Academic alerts, performance analytics, intervention tracking
+- **Certification**: Automated certificate generation, transcript printing
+
+#### Communication System
+- **Messaging Platform**: Internal messaging between staff, students, parents
+- **Announcement System**: Institution-wide and targeted announcements
+- **Email Integration**: Automated notifications and reminders
+- **Mobile App**: Push notifications, offline access to key information
+- **Parent Communication**: Regular updates, meeting scheduling, progress reports
+
+#### Academic Planning
+- **Curriculum Management**: Course planning, prerequisite mapping, program requirements
+- **Resource Planning**: Classroom allocation, equipment booking, staff scheduling
+- **Academic Calendar**: Event planning, deadline management, holiday scheduling
+- **Report Generation**: Academic reports, statistical analysis, compliance reporting
+
+### 3. Timetabling Features (Institution-Specific)
+
+#### University Timetabling
+- **Faculty-Based Scheduling**: Coordinate across multiple departments
+- **Program Management**: Ensure degree requirements are met
+- **Credit Hour Allocation**: Proper distribution of contact hours
+- **Research Time**: Protected time for academic staff research
+- **Seminar/Tutorial Groups**: Small group scheduling
+- **Laboratory Sessions**: Specialized equipment and safety requirements
+- **Field Work**: External placement and practical session scheduling
+
+#### High School Timetabling
+- **Core Subject Priority**: Ensure essential subjects are optimally placed
+- **Option Blocks**: Flexible scheduling for elective subjects
+- **Form Time**: Registration and pastoral care periods
+- **Assembly Scheduling**: Whole school and year group assemblies
+- **Break/Lunch Optimization**: Appropriate break distribution
+- **After-School Activities**: Sports, clubs, and enrichment programs
+
+#### Universal Timetabling Features
+- **Multi-Site Support**: Scheduling across multiple campuses/buildings
+- **Substitute Teacher Management**: Rapid rescheduling for staff absences
+- **Exam Timetabling**: Conflict-free examination scheduling
+- **Event Integration**: Special events, guest lectures, ceremonies
+- **Resource Booking**: Equipment, vehicles, external facilities
+
+### 4. Educational System Support
+
+#### British System Support
+- **Key Stage Structure**: KS3, KS4, KS5 with appropriate subjects
+- **GCSE Integration**: Core and optional subjects, exam board requirements
+- **A-Level Support**: AS and A2 levels, facilitating subjects
+- **University Structure**: Faculties, departments, undergraduate/postgraduate divisions
+- **UK Grade System**: Grade boundaries, UCAS points, degree classifications
+- **Term Structure**: Autumn, spring, summer terms with half-terms
+
+#### American System Support
+- **High School Structure**: Grades 9-12, credit requirements, GPA calculation
+- **Course Levels**: Regular, Honors, AP (Advanced Placement), IB courses
+- **Graduation Requirements**: Core subjects, electives, community service
+- **University Structure**: Colleges, schools, departments, majors/minors
+- **Credit System**: Credit hours, semester/quarter systems, dean's list
+- **Assessment Integration**: Continuous assessment, standardized testing preparation
+
+#### Flexible International Support
+- **IB Program**: DP, MYP, PYP curriculum structures
+- **Custom Systems**: Adaptable framework for regional requirements
+- **Multi-Language Support**: Interface and content in multiple languages
+- **Cultural Adaptations**: Local holidays, cultural considerations, time zones
+
+### 5. Technical Implementation
+
+#### Frontend Architecture
+- **Responsive Dashboard**: Adaptive interface for different institution types
+- **Role-Based Access**: Different interfaces for admin, staff, students, parents
+- **Multi-Platform**: Web, mobile app, tablet optimization
+- **Real-Time Updates**: Live notifications, instant grade updates
+- **Offline Capability**: Essential features available without internet
+
+#### Student/Parent Portals
+- **Student Dashboard**: 
+  - Personal timetable with real-time updates
+  - Grade viewer with detailed breakdown
+  - Assignment submission and tracking
+  - Attendance monitoring
+  - Fee payment status
+  - Library account and resources
+  - Career guidance and counseling booking
+- **Parent Portal** (High Schools):
+  - Child's academic progress
+  - Attendance reports
+  - Communication with teachers
+  - Event calendar and permissions
+  - Payment tracking and online payments
+
+#### Administrative Interface
+- **Institution Dashboard**: Key metrics, alerts, quick actions
+- **Academic Management**: Course planning, staff allocation, student progression
+- **Financial Integration**: Fee management, budget tracking, payroll integration
+- **Reporting Suite**: Custom reports, analytics, compliance documentation
+- **System Configuration**: Institution-specific settings, user management
+
+#### Backend Logic
+- **Scheduling Engine**: Implement constraint satisfaction algorithm
+- **Validation System**: Check for conflicts before saving
+- **Database Design**: Efficient storage of timetable data
+- **API Endpoints**: CRUD operations for all entities
+
+#### Advanced Scheduling Algorithm Requirements
+- **Multi-Factor Optimization Engine**: Combine multiple weighted factors for optimal scheduling
+- **Course Weight Analysis**: Assign priority scores based on difficulty, importance, and academic weight
+- **Circadian Rhythm Optimization**: Schedule courses based on optimal learning times for different subjects
+- **Weather-Aware Scheduling**: Integrate weather data to optimize indoor/outdoor activities and energy levels
+- **Dynamic Time Slot Scoring**: Calculate efficiency scores for each time slot based on multiple factors
+- **Adaptive Learning**: Machine learning to improve scheduling based on student performance data
+- **Load Balancing**: Distribute lecturer workload evenly across days and time periods
+- **Resource Allocation**: Efficiently assign classrooms based on requirements and availability
+- **Constraint Satisfaction**: Handle complex multi-constraint optimization problems
+
+### 4. User Interface Specifications
+
+#### Main Dashboard
+- Weekly grid view (Monday-Friday, 8:00 AM - 5:00 PM)
+- Color-coded subjects/courses
+- Lecturer and classroom information in each slot
+- Quick-edit functionality
+
+#### Management Panels
+- Course management with bulk import
+- Lecturer profile management
+- Class configuration
+- Constraint settings
+
+#### Reporting Features
+- Lecturer workload reports
+- Classroom utilization statistics
+- Course distribution analysis
+- Conflict resolution logs
+
+### 5. Advanced Features
+
+#### Intelligent Features
+- **Multi-Factor Auto-Scheduling**: Generate complete timetables using weighted optimization
+- **Smart Time Slot Assignment**: AI-powered selection of optimal time slots
+- **Efficiency Scoring Algorithm**: Rate time slots based on multiple factors:
+  - Course difficulty weight (1-10 scale)
+  - Academic importance (core vs elective)
+  - Weather conditions (temperature, humidity, pressure)
+  - Time of day optimization (morning for analytical, afternoon for creative)
+  - Student attention span patterns
+  - Lecturer energy levels
+- **Predictive Analytics**: Forecast optimal scheduling patterns
+- **Conflict Resolution**: Suggest alternatives when conflicts occur
+- **Pattern Recognition**: Learn from manual adjustments and performance data
+- **Performance Correlation**: Track student outcomes vs scheduling patterns
+- **Weather-Adaptive Rescheduling**: Automatically adjust for extreme weather conditions
+
+#### Flexibility Options
+- **Template System**: Save and reuse timetable templates
+- **Semester Planning**: Handle different terms/semesters
+- **Special Events**: Block time for assemblies, exams, etc.
+- **Substitute Management**: Handle lecturer absences
+
+### 6. Technical Stack Recommendations
+
+#### Frontend
+- React.js or Vue.js for interactive UI
+- Drag-and-drop libraries (React Beautiful DND)
+- Chart.js for analytics
+- Responsive design for mobile access
+
+#### Backend
+- Node.js/Express or Python/Django
+- PostgreSQL or MongoDB for data storage
+- RESTful API design
+- Authentication and authorization
+
+#### Algorithm Implementation
+- **Weighted Scoring System**: Multi-criteria decision analysis
+- **Genetic Algorithm**: Evolutionary optimization for complex scheduling
+- **Neural Networks**: Learn optimal patterns from historical data
+- **Weather API Integration**: OpenWeatherMap or similar services
+- **Constraint Satisfaction Programming**: Handle complex multi-constraint problems
+- **Simulated Annealing**: Fine-tune scheduling optimization
+- **Machine Learning Pipeline**: Continuous improvement based on outcomes
+
+### 7. Enhanced Sample Data Structure
+
+```json
+{
+  "institution": {
+    "id": "inst_001",
+    "name": "Cambridge International School",
+    "type": "university",
+    "educationSystem": "british",
+    "structure": {
+      "faculties": ["engineering", "arts", "sciences"],
+      "departments": ["computer_science", "mathematics", "english"],
+      "academicYears": ["year1", "year2", "year3", "masters"]
+    }
+  },
+  "faculty": {
+    "id": "faculty_eng",
+    "name": "Faculty of Engineering",
+    "dean": "prof_smith",
+    "departments": ["comp_sci", "mechanical", "civil"],
+    "budgetAllocation": 2500000
+  },
+  "department": {
+    "id": "comp_sci",
+    "name": "Computer Science Department",
+    "faculty": "faculty_eng",
+    "head": "dr_jones",
+    "staff": ["lecturer_001", "lecturer_002"],
+    "programs": ["bsc_cs", "msc_cs", "phd_cs"]
+  },
+  "student": {
+    "id": "student_001",
+    "name": "John Smith",
+    "program": "bsc_cs",
+    "yearOfStudy": 2,
+    "academicRecord": {
+      "gpa": 3.7,
+      "credits": 45,
+      "standing": "good"
+    },
+    "enrolledCourses": ["CS201", "MATH201", "ENG101"]
+  },
+  "course": {
+    "id": "CS201",
+    "name": "Data Structures",
+    "department": "comp_sci",
+    "credits": 3,
+    "hoursPerWeek": 4,
+    "difficultyWeight": 7,
+    "prerequisites": ["CS101"],
+    "lecturer": "lecturer_001",
+    "assessmentStructure": {
+      "coursework": 40,
+      "examination": 60
+    }
+  },
+  "gradeRecord": {
+    "studentId": "student_001",
+    "courseId": "CS201",
+    "semester": "fall_2024",
+    "grades": {
+      "assignment1": 85,
+      "midterm": 78,
+      "final": 82,
+      "overall": "B+"
+    },
+    "attendance": "95%"
+  },
+  "timetableSlot": {
+    "id": "slot_001",
+    "day": "Monday",
+    "startTime": "09:00",
+    "endTime": "10:30",
+    "course": "CS201",
+    "lecturer": "lecturer_001",
+    "classroom": "Room_A101",
+    "studentGroups": ["cs_year2_group1"],
+    "efficiencyScore": 0.92,
+    "weatherFactor": 0.85
+  },
+  "parentPortal": {
+    "parentId": "parent_001",
+    "children": ["student_001"],
+    "permissions": ["view_grades", "receive_notifications", "book_meetings"],
+    "lastAccess": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+### 8. Success Criteria
+
+#### Timetabling Excellence
+- **Zero scheduling conflicts** with intelligent conflict resolution
+- **Optimized efficiency scores** above 85% for all time slots
+- **Balanced workload distribution** across staff and departments
+- **Weather-adaptive scheduling** with automatic adjustments
+- **Improved academic performance** through optimized scheduling
+
+#### Management System Integration
+- **Seamless data flow** between timetabling and student records
+- **Real-time grade updates** accessible to students and parents
+- **Automated report generation** for academic and administrative needs
+- **99.9% system uptime** with robust backup and recovery
+- **Mobile-responsive interface** for all user types
+
+#### Educational System Compliance
+- **Full compliance** with British/American educational standards
+- **Accurate grade calculations** for respective systems
+- **Proper credit/hour tracking** and degree progression monitoring
+- **Automated compliance reporting** for regulatory requirements
+- **Seamless system migration** from existing platforms
+
+#### User Experience
+- **Intuitive onboarding** completing setup in under 30 minutes
+- **Role-appropriate dashboards** with relevant information prioritized
+- **Fast performance** with page loads under 3 seconds
+- **Comprehensive help system** with contextual guidance
+- **Multi-language support** for international institutions
+
+### 9. Additional Implementation Requirements
+
+#### Security & Privacy
+- **Data Protection**: GDPR/FERPA compliance for student data
+- **Role-Based Security**: Granular permissions for different user types
+- **Audit Trails**: Complete logging of all system actions
+- **Secure Authentication**: Multi-factor authentication, single sign-on
+- **Data Encryption**: End-to-end encryption for sensitive information
+
+#### Integration Capabilities
+- **API Architecture**: RESTful APIs for third-party integrations
+- **LMS Integration**: Seamless connection with learning management systems
+- **Financial System**: Integration with accounting and fee management
+- **Government Reporting**: Automated compliance reporting to education authorities
+- **Import/Export**: Support for common data formats and migration tools
+
+#### Scalability & Performance
+- **Cloud-Native Architecture**: Scalable deployment on AWS/Azure/GCP
+- **Multi-Tenant Support**: Serve multiple institutions from single deployment
+- **Backup & Recovery**: Automated backups with point-in-time recovery
+- **Performance Monitoring**: Real-time system performance tracking
+- **Load Balancing**: Handle high concurrent user loads
+
+#### Mobile & Accessibility
+- **Native Mobile Apps**: iOS and Android applications
+- **Progressive Web App**: Offline functionality for essential features
+- **Accessibility Compliance**: WCAG 2.1 AA standards
+- **Multi-Device Sync**: Seamless experience across all devices
+- **Push Notifications**: Real-time alerts and reminders
+
+Create this comprehensive educational management system with modular architecture, allowing institutions to enable only the features they need while maintaining the ability to scale and add functionality as they grow. The system should feel native to each educational system while maintaining a consistent, intuitive user experience.
