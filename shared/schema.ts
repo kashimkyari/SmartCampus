@@ -11,6 +11,8 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   role: varchar("role", { length: 50 }).notNull().default("admin"),
   institutionId: integer("institution_id"),
+  isActive: boolean("is_active").default(true),
+  permissions: text("permissions").array(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -166,6 +168,36 @@ export const activitiesLog = pgTable("activities_log", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Attendance table for API integration
+export const attendanceRecords = pgTable("attendance_records", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").notNull(),
+  institutionId: integer("institution_id").notNull(),
+  date: varchar("date", { length: 20 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull(), // present, absent, late, excused
+  checkInTime: timestamp("check_in_time"),
+  checkOutTime: timestamp("check_out_time"),
+  biometricId: varchar("biometric_id", { length: 255 }), // for fingerprint/facial recognition
+  deviceId: varchar("device_id", { length: 255 }), // attendance device identifier
+  metadata: json("metadata"), // additional data from attendance system
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// API Integration table for external systems
+export const apiIntegrations = pgTable("api_integrations", {
+  id: serial("id").primaryKey(),
+  institutionId: integer("institution_id").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // attendance, lms, sis, finance, etc.
+  endpoint: text("endpoint").notNull(),
+  apiKey: text("api_key"),
+  configuration: json("configuration"),
+  isActive: boolean("is_active").default(true),
+  lastSync: timestamp("last_sync"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   institution: one(institutions, {
@@ -310,6 +342,24 @@ export const timetableSlotsRelations = relations(timetableSlots, ({ one }) => ({
   }),
 }));
 
+export const attendanceRecordsRelations = relations(attendanceRecords, ({ one }) => ({
+  student: one(students, {
+    fields: [attendanceRecords.studentId],
+    references: [students.id],
+  }),
+  institution: one(institutions, {
+    fields: [attendanceRecords.institutionId],
+    references: [institutions.id],
+  }),
+}));
+
+export const apiIntegrationsRelations = relations(apiIntegrations, ({ one }) => ({
+  institution: one(institutions, {
+    fields: [apiIntegrations.institutionId],
+    references: [institutions.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -368,6 +418,17 @@ export const insertActivityLogSchema = createInsertSchema(activitiesLog).omit({
   createdAt: true,
 });
 
+export const insertAttendanceRecordSchema = createInsertSchema(attendanceRecords).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertApiIntegrationSchema = createInsertSchema(apiIntegrations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -391,3 +452,7 @@ export type InsertTimetableSlot = z.infer<typeof insertTimetableSlotSchema>;
 export type TimetableSlot = typeof timetableSlots.$inferSelect;
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
 export type ActivityLog = typeof activitiesLog.$inferSelect;
+export type InsertAttendanceRecord = z.infer<typeof insertAttendanceRecordSchema>;
+export type AttendanceRecord = typeof attendanceRecords.$inferSelect;
+export type InsertApiIntegration = z.infer<typeof insertApiIntegrationSchema>;
+export type ApiIntegration = typeof apiIntegrations.$inferSelect;

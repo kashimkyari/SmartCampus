@@ -5,7 +5,7 @@ import {
   insertUserSchema, insertInstitutionSchema, insertFacultySchema, 
   insertDepartmentSchema, insertAcademicStaffSchema, insertStudentSchema,
   insertCourseSchema, insertClassroomSchema, insertTimeSlotSchema,
-  insertTimetableSlotSchema
+  insertTimetableSlotSchema, insertAttendanceRecordSchema, insertApiIntegrationSchema
 } from "@shared/schema";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -428,6 +428,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = parseInt(req.query.limit as string) || 10;
       const activities = await storage.getRecentActivities(institutionId, limit);
       res.json(activities);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Attendance endpoints
+  app.get("/api/attendance/student/:studentId", authenticateToken, async (req, res) => {
+    try {
+      const studentId = parseInt(req.params.studentId);
+      const date = req.query.date as string;
+      const attendance = await storage.getAttendanceByStudent(studentId, date);
+      res.json(attendance);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/attendance/institution/:institutionId", authenticateToken, async (req, res) => {
+    try {
+      const institutionId = parseInt(req.params.institutionId);
+      const date = req.query.date as string;
+      const attendance = await storage.getAttendanceByInstitution(institutionId, date);
+      res.json(attendance);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/attendance", authenticateToken, async (req: any, res) => {
+    try {
+      const recordData = insertAttendanceRecordSchema.parse(req.body);
+      const record = await storage.createAttendanceRecord(recordData);
+      res.status(201).json(record);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/attendance/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const record = await storage.updateAttendanceRecord(id, req.body);
+      
+      if (!record) {
+        return res.status(404).json({ message: "Record not found" });
+      }
+
+      res.json(record);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // API Integration endpoints
+  app.get("/api/integrations/:institutionId", authenticateToken, async (req, res) => {
+    try {
+      const institutionId = parseInt(req.params.institutionId);
+      const integrations = await storage.getApiIntegrations(institutionId);
+      res.json(integrations);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/integrations", authenticateToken, async (req: any, res) => {
+    try {
+      const integrationData = insertApiIntegrationSchema.parse(req.body);
+      const integration = await storage.createApiIntegration(integrationData);
+      res.status(201).json(integration);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/integrations/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const integration = await storage.updateApiIntegration(id, req.body);
+      
+      if (!integration) {
+        return res.status(404).json({ message: "Integration not found" });
+      }
+
+      res.json(integration);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/integrations/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteApiIntegration(id);
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // User management endpoints
+  app.get("/api/users/institution/:institutionId", authenticateToken, async (req, res) => {
+    try {
+      const institutionId = parseInt(req.params.institutionId);
+      const role = req.query.role as string;
+      const users = await storage.getUsersByRole(institutionId, role);
+      res.json(users);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/users/:id/role", authenticateToken, async (req: any, res) => {
+    try {
+      // Only admins can change user roles
+      if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Only admins can modify user roles" });
+      }
+
+      const id = parseInt(req.params.id);
+      const { role, permissions } = req.body;
+
+      if (!role) {
+        return res.status(400).json({ message: "Role is required" });
+      }
+
+      const updatedUser = await storage.updateUserRole(id, role, permissions);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json(updatedUser);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

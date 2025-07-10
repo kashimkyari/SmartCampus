@@ -7,12 +7,18 @@ import { AuthProvider } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import Onboarding from "@/pages/onboarding";
 import Dashboard from "@/pages/dashboard";
+import ApiIntegrations from "@/pages/api-integrations";
+import Attendance from "@/pages/attendance";
+import UserManagement from "@/pages/user-management";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Onboarding} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/api-integrations" component={ApiIntegrations} />
+      <Route path="/attendance" component={Attendance} />
+      <Route path="/user-management" component={UserManagement} />
       <Route component={NotFound} />
     </Switch>
   );

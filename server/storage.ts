@@ -1,13 +1,14 @@
 import { 
   users, institutions, faculties, departments, academicStaff, students, 
   courses, classrooms, timeSlots, timetableSlots, studentEnrollments, 
-  gradeRecords, activitiesLog,
+  gradeRecords, activitiesLog, attendanceRecords, apiIntegrations,
   type User, type InsertUser, type Institution, type InsertInstitution,
   type Faculty, type InsertFaculty, type Department, type InsertDepartment,
   type AcademicStaff, type InsertAcademicStaff, type Student, type InsertStudent,
   type Course, type InsertCourse, type Classroom, type InsertClassroom,
   type TimeSlot, type InsertTimeSlot, type TimetableSlot, type InsertTimetableSlot,
-  type ActivityLog, type InsertActivityLog
+  type ActivityLog, type InsertActivityLog, type AttendanceRecord, type InsertAttendanceRecord,
+  type ApiIntegration, type InsertApiIntegration
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -72,6 +73,22 @@ export interface IStorage {
   // Activity Log
   getRecentActivities(institutionId: number, limit?: number): Promise<ActivityLog[]>;
   logActivity(activity: InsertActivityLog): Promise<ActivityLog>;
+
+  // Attendance operations
+  getAttendanceByStudent(studentId: number, date?: string): Promise<AttendanceRecord[]>;
+  getAttendanceByInstitution(institutionId: number, date?: string): Promise<AttendanceRecord[]>;
+  createAttendanceRecord(record: InsertAttendanceRecord): Promise<AttendanceRecord>;
+  updateAttendanceRecord(id: number, record: Partial<InsertAttendanceRecord>): Promise<AttendanceRecord | undefined>;
+
+  // API Integration operations
+  getApiIntegrations(institutionId: number): Promise<ApiIntegration[]>;
+  createApiIntegration(integration: InsertApiIntegration): Promise<ApiIntegration>;
+  updateApiIntegration(id: number, integration: Partial<InsertApiIntegration>): Promise<ApiIntegration | undefined>;
+  deleteApiIntegration(id: number): Promise<void>;
+
+  // User management with role editing
+  updateUserRole(userId: number, role: string, permissions?: string[]): Promise<User | undefined>;
+  getUsersByRole(institutionId: number, role: string): Promise<User[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -284,6 +301,88 @@ export class DatabaseStorage implements IStorage {
   async logActivity(insertActivity: InsertActivityLog): Promise<ActivityLog> {
     const [activity] = await db.insert(activitiesLog).values(insertActivity).returning();
     return activity;
+  }
+
+  // Attendance operations
+  async getAttendanceByStudent(studentId: number, date?: string): Promise<AttendanceRecord[]> {
+    if (date) {
+      return db.select().from(attendanceRecords)
+        .where(and(eq(attendanceRecords.studentId, studentId), eq(attendanceRecords.date, date)))
+        .orderBy(desc(attendanceRecords.createdAt));
+    }
+    return db.select().from(attendanceRecords)
+      .where(eq(attendanceRecords.studentId, studentId))
+      .orderBy(desc(attendanceRecords.createdAt));
+  }
+
+  async getAttendanceByInstitution(institutionId: number, date?: string): Promise<AttendanceRecord[]> {
+    if (date) {
+      return db.select().from(attendanceRecords)
+        .where(and(eq(attendanceRecords.institutionId, institutionId), eq(attendanceRecords.date, date)))
+        .orderBy(desc(attendanceRecords.createdAt));
+    }
+    return db.select().from(attendanceRecords)
+      .where(eq(attendanceRecords.institutionId, institutionId))
+      .orderBy(desc(attendanceRecords.createdAt));
+  }
+
+  async createAttendanceRecord(insertRecord: InsertAttendanceRecord): Promise<AttendanceRecord> {
+    const [record] = await db.insert(attendanceRecords).values(insertRecord).returning();
+    return record;
+  }
+
+  async updateAttendanceRecord(id: number, updateData: Partial<InsertAttendanceRecord>): Promise<AttendanceRecord | undefined> {
+    const [record] = await db
+      .update(attendanceRecords)
+      .set(updateData)
+      .where(eq(attendanceRecords.id, id))
+      .returning();
+    return record || undefined;
+  }
+
+  // API Integration operations
+  async getApiIntegrations(institutionId: number): Promise<ApiIntegration[]> {
+    return db.select().from(apiIntegrations).where(eq(apiIntegrations.institutionId, institutionId));
+  }
+
+  async createApiIntegration(insertIntegration: InsertApiIntegration): Promise<ApiIntegration> {
+    const [integration] = await db.insert(apiIntegrations).values(insertIntegration).returning();
+    return integration;
+  }
+
+  async updateApiIntegration(id: number, updateData: Partial<InsertApiIntegration>): Promise<ApiIntegration | undefined> {
+    const [integration] = await db
+      .update(apiIntegrations)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(apiIntegrations.id, id))
+      .returning();
+    return integration || undefined;
+  }
+
+  async deleteApiIntegration(id: number): Promise<void> {
+    await db.delete(apiIntegrations).where(eq(apiIntegrations.id, id));
+  }
+
+  // User management with role editing
+  async updateUserRole(userId: number, role: string, permissions?: string[]): Promise<User | undefined> {
+    const updateData: Partial<InsertUser> = { role };
+    if (permissions) {
+      updateData.permissions = permissions;
+    }
+    
+    const [user] = await db
+      .update(users)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user || undefined;
+  }
+
+  async getUsersByRole(institutionId: number, role: string): Promise<User[]> {
+    return db
+      .select()
+      .from(users)
+      .where(and(eq(users.institutionId, institutionId), eq(users.role, role)));
   }
 }
 
